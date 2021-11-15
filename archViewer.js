@@ -406,6 +406,7 @@ function fetchDataFromServerAndPlot(xAxisChangeType, newTracePVNames) {
 					x: viewerVars.pvData[pvName].secs,
 					y: viewerVars.pvData[pvName].vals,
 					name: pvName,
+					hoverlabel: {namelength :-1},
 					type: 'scatter',
 					mode: "lines",
 					line: {shape: 'hv'},
@@ -620,6 +621,7 @@ function process3DPlot(pvName, data) {
 				x: range(viewerVars.pvData[pvName].vals[currentFrame].length),
 				y: viewerVars.pvData[pvName].vals[currentFrame],
 				name: pvName,
+				hoverlabel: {namelength :-1},
 				type: 'scatter',
 				yaxis: 'y1'
 		};
