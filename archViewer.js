@@ -861,7 +861,23 @@ function exportToCSV() {
 	var tbl = d[1];
 	var csvContent = "Timestamp," + names.join(",") + "\n";
 	Object.keys(tbl).sort().forEach(function(key) { csvContent +=  moment(key).format("YYYY/MM/DD HH:mm:ss.SSS,") + tbl[key].join(",") + "\n"; });
-	myWindow = window.open("data:text/csv;charset=utf-8," + encodeURIComponent(csvContent));
+	//myWindow = window.open("data:text/csv;charset=utf-8," + encodeURIComponent(csvContent));
+	viewFile("data:text/csv;charset=utf-8," + encodeURIComponent(csvContent));
+}
+
+function viewFile(csvContent) {
+	var encodedUri = encodeURI(csvContent);
+	var link = document.createElement("a");
+	link.setAttribute("href", encodedUri);
+	link.setAttribute("download", toLocal(new Date()) + ".csv");
+	document.body.appendChild(link); // Required for FF
+	link.click(); // This will download the data file named "my_data.csv".
+}
+
+function toLocal(date) {
+  var local = new Date(date);
+  local.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return local.toJSON();
 }
 
 function getLinkToCurrentView() {
