@@ -83,11 +83,27 @@ viewerVars.selectorOptions = {
 		          {step: 'day',     stepmode: 'backward', count: 14, label: '2w'    },
 		          {step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
 		          {step: 'month',   stepmode: 'backward', count: 6,  label: '6M'    },
-		          {step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
 		          {step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
+		          {step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
 		          {step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
 		          ]
 };
+
+if (window.screen.availHeight > window.screen.availWidth) {
+	viewerVars.selectorOptions = {
+		buttons: [
+			  {step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
+			  {step: 'minute',  stepmode: 'backward', count: 1,  label: '1m'    },
+			  {step: 'hour',    stepmode: 'backward', count: 1,  label: '1h'    },
+			  {step: 'day',     stepmode: 'backward', count: 1,  label: '1d'    },
+			  {step: 'day',     stepmode: 'backward', count: 7,  label: '1w'    },
+			  {step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
+			  {step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
+			  {step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
+			  ]
+	};
+}
+
 
 viewerVars.relativeDateRegex = /^([-+]{0,1})(\d+)([smhdwMQy]{1})$/; // Get these from moment.js Manipulate shorthand.
 
@@ -507,6 +523,7 @@ function fetchDataFromServerAndPlot(xAxisChangeType, newTracePVNames) {
 
 // The modebar is specified in the plotConfig. Use icons from font-awesome to create our modebar buttons.
 function generatePlotConfig() {
+	var bPhone = (window.screen.availHeight > window.screen.availWidth) ? true : false;
 	var newModeBarButtons = [];
 	newModeBarButtons.push({ name: 'Start/End',
 		icon: viewerVars.icons['regular/calendar-alt'],
@@ -515,49 +532,59 @@ function generatePlotConfig() {
 			$("#dialog_endTime").val(moment(viewerVars.end).format("YYYY/MM/DD HH:mm:ss"));
 			$('#startEndTimeModal').modal('show');
 		}});
-	if(viewerVars.plotType == viewerVars.plotTypeEnum.SCATTER_2D) {
+	if (viewerVars.plotType == viewerVars.plotTypeEnum.SCATTER_2D && bPhone == false) {
 		newModeBarButtons.push({ name: 'Add PVs',
 			icon: viewerVars.icons['solid/search'],
 			click: function() { $('#searchAndAddPVsModal').modal('show'); }
 		});
 	}
-	newModeBarButtons.push({ name: 'Show Data',
-		icon: viewerVars.icons['solid/save'],
-		click: showChartDataAsText
-	});
+	if (bPhone == false) {
+		newModeBarButtons.push({ name: 'Show Data',
+			icon: viewerVars.icons['solid/save'],
+			click: showChartDataAsText
+		});
+	}
 	newModeBarButtons.push({ name: 'Export as CSV',
 		icon: viewerVars.icons['solid/download'],
 		click: exportToCSV
 	});
-	newModeBarButtons.push({ name: 'Link to current',
-		icon: viewerVars.icons['solid/link'],
-		click: showLinkToCurrentView
-	});
+	if (bPhone == false) {
+		newModeBarButtons.push({ name: 'Link to current',
+			icon: viewerVars.icons['solid/link'],
+			click: showLinkToCurrentView
+		});
+	}
     if(viewerVars.siteSupportsPostToElog) {
         newModeBarButtons.push({ name: 'Post to elog',
     		icon: viewerVars.icons['solid/share'],
     		click: showElogModal
     	});
     }
-    newModeBarButtons.push({ name: 'Y Axes ranges',
-		icon: viewerVars.icons['solid/text-height'],
-		click: showYAxesRangeModal
-	});
-    newModeBarButtons.push({ name: 'Remove PVs',
-		icon: viewerVars.icons['solid/trash-alt'],
-		click: showRemovePVsModal
-	});
-	newModeBarButtons.push({ name: 'Help',
-		icon: viewerVars.icons['regular/question-circle'],
-		click: showHelp
-	});
+	if (bPhone == false) {
+	    newModeBarButtons.push({ name: 'Y Axes ranges',
+			icon: viewerVars.icons['solid/text-height'],
+			click: showYAxesRangeModal
+		});
+	}
+	if (bPhone == false) {
+	    newModeBarButtons.push({ name: 'Remove PVs',
+			icon: viewerVars.icons['solid/trash-alt'],
+			click: showRemovePVsModal
+		});
+	}	
+	if (bPhone == false) {
+		newModeBarButtons.push({ name: 'Help',
+			icon: viewerVars.icons['regular/question-circle'],
+			click: showHelp
+		});
+	}
 
 
 	// Add mode bar buttons for start+end time etc
 	var plotConfig = {
 			displaylogo: false,
 			modeBarButtonsToAdd: newModeBarButtons,
-			modeBarButtonsToRemove: ['sendDataToCloud']
+			modeBarButtonsToRemove: bPhone ? ['sendDataToCloud', 'toggleSpikelines', 'toImage', 'toggleHover', 'hoverClosestCartesian', 'hoverCompareCartesian'] : ['sendDataToCloud']
 	};
 	return plotConfig;
 }
