@@ -137,6 +137,8 @@ function parseURLParameters() {
             case "binSize":
                 viewerVars.binSize = parseInt(val);
                 viewerVars.userFixedBinSize = true;
+            case "replaceNA":
+                viewerVars.replaceNA = val === 'true' ? true : false;
 			default:
 				console.log("Unsupported parameter " + name); break;
 			}
@@ -887,9 +889,45 @@ function showChartDataAsText() {
 function exportToCSV() {
 	var d = getCurrentDataAsDict();
 	var names = d[0];
-	var tbl = d[1];
+	var tbl = Object.fromEntries(Object.entries(d[1]).sort());
+	
+	if (viewerVars.replaceNA) {
+		let memoTbl = Array.from(tbl[Object.keys(tbl)[0]]);
+		let firstTbl = Array.from(tbl[Object.keys(tbl)[0]]);
+		
+		// replace N/A value with previous non N/A value
+		Object.keys(tbl).forEach(function(key) {
+			tbl[key] = tbl[key].map(function(val, index) {
+				if (val == 'N/A') {
+					if (memoTbl[index] != 'N/A') val = memoTbl[index];
+				}
+				else {
+					// memorize previous value
+					memoTbl[index] = val;
+					// memorize fisrt value which is not N/A
+					if (firstTbl[index] == 'N/A') firstTbl[index] = val;
+				} 
+				return val;
+			});
+		});
+
+		// if first value was N/A, replace N/A by next non N/A value
+		Object.keys(tbl).every(function(key) {
+			let stillNA = false;
+			tbl[key] = tbl[key].map(function(val, index) {
+				if (val == 'N/A') {
+					val = firstTbl[index];
+					stillNA = true;
+				}
+				return val;
+			});
+			if (stillNA === false) return false;
+			return true;
+		});
+	}
+
 	var csvContent = "Timestamp," + names.join(",") + "\n";
-	Object.keys(tbl).sort().forEach(function(key) { csvContent +=  moment(key).format("YYYY/MM/DD HH:mm:ss.SSS,") + tbl[key].join(",") + "\n"; });
+	Object.keys(tbl).forEach(function(key) { csvContent +=  moment(key).format("YYYY/MM/DD HH:mm:ss.SSS,") + tbl[key].join(",") + "\n"; });
 	//myWindow = window.open("data:text/csv;charset=utf-8," + encodeURIComponent(csvContent));
 	viewFile("data:text/csv;charset=utf-8," + encodeURIComponent(csvContent));
 }
