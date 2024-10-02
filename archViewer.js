@@ -47,8 +47,12 @@ viewerVars.icons = {}
 // We take a snapshot of the gd before showing the comment modal. This is stored here
 viewerVars.currentSnapshot = null;
 
-// in live mode flag
-viewerVars.inLiveMode = false;
+//Test
+// last interval choice
+var lastInterval = null;
+// last time unit choice
+var lastUnit = null;
+//End test
 
 // This is one of the integration points with the server.
 // This should default to a path relative location that works from the appliance UI.
@@ -296,8 +300,8 @@ function processChangesOnXAxis(eventdata) {
 				Plotly.relayout(myDiv, layoutChanges);
 				viewerVars.liveModeTimer = setInterval(liveModeTick, 1*1000);
 			} else {
-				console.log("Enter in static mode..");
 				if(viewerVars.liveModeTimer != null) {
+					console.log("Entering static mode..");
 					clearInterval(viewerVars.liveModeTimer);
 					viewerVars.liveModeTimer = null;
 					var layoutChanges = {'xaxis' : { 'autorange' : false}};
@@ -315,8 +319,6 @@ function processChangesOnXAxis(eventdata) {
 		viewerVars.queryStart = viewerVars.start;
 		viewerVars.queryEnd = previousStart;
 		fetchDataFromServerAndPlot("LeftPan");
-	} else {
-		console.log("Continuing");
 	}
 }
 
@@ -538,7 +540,7 @@ function generatePlotConfig() {
 
 	//Test Advanced view button
 	newModeBarButtons.push({ name: 'Advanced view',
-		icon: viewerVars.icons['solid/binoculars'],
+		icon: viewerVars.icons['solid/timeline'],
 		click: showAdvancedViewModal
 	});
 	//End test
@@ -1096,51 +1098,45 @@ function removeSelectedPVs() {
 
 // Test advanced view
 function showAdvancedViewModal(){
+	var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
+	lastUnit = viewerVars.selectorOptions.buttons[buttonIndex].step;
+	lastInterval = viewerVars.selectorOptions.buttons[buttonIndex].count;
 	var modal = `
-        <div class="radio">
-            <label><input type="radio" name="liveInterval" value="30s" checked> 30 seconds</label>
-        </div>
-        <div class="radio">
-            <label><input type="radio" name="liveInterval" value="1m"> 1 minute</label>
-        </div>
-		<div class="radio">
-            <label><input type="radio" name="liveInterval" value="15m"> 15 minutes</label>
-        </div>
-		<div class="radio">
-            <label><input type="radio" name="liveInterval" value="30m"> 30 minutes</label>
-        </div>
-		<div class="radio">
-            <label><input type="radio" name="liveInterval" value="1h"> 1 hour</label>
-        </div>
-		<div class="radio">
-            <label><input type="radio" name="liveInterval" value="2h"> 2 hours</label>
-        </div>`;
+		<div class="row align-items-center">
+			<div class="col-auto">
+				<label for="timeInput"><b>Enter your desired interval:</b></label>
+			</div>
+			<div class="col-auto">
+				<input id="timeInput" name="timeInput" type="number" min="1" value="${lastInterval}" class="form-control" style="width: 100px;" required onblur="validateInput(this)" />
+			</div>
+			<script>
+    			function validateInput(input) {
+					if (input.value < 1) {
+						input.value = 1;
+					}
+				}
+			</script>
+			<div class="col-auto">
+				<label for="timeInput"><b>Select your desired time unit:</b></label>
+			</div>
+			<div class="col-auto">
+				<select class="form-control" id="unitInput" style="width: 100px;">
+					<option value="second" ${lastUnit === 'second' ? 'selected' : ''}>second</option>
+					<option value="minute" ${lastUnit === 'minute' ? 'selected' : ''}>minute</option>
+					<option value="hour" ${lastUnit === 'hour' ? 'selected' : ''}>hour</option>
+					<option value="day" ${lastUnit === 'day' ? 'selected' : ''}>day</option>
+				</select>
+			</div>
+		</div>
+		`;
 	Mustache.parse(modal);
-	$('#advancedViewModal').find('.radiolist').empty().append(Mustache.render(modal));
+	$('#advancedViewModal').find('.input-field').empty().append(Mustache.render(modal));
 	$('#advancedViewModal').modal('show');
 }
 
 function showAdvancedView(){
-	var selectedInterval = $('#advancedViewModal').find('.radiolist').find('input[name="liveInterval"]:checked').val();
-	var step = '';
-	const regex = /^(\d+)([a-zA-Z])$/;
-	var parts = regex.exec(selectedInterval);
-	var count = parseInt(parts[1]);
-	switch (parts[2]) {
-		case 's':
-			step = 'second';
-			break;
-		case 'm':
-			step = 'minute';
-			break;
-		case 'h':
-			step = 'hour';
-			break;
-		// To be added ...
-		default:
-			step = 'day';
-			break;
-	}
+	var step = document.getElementById('unitInput').value;
+	var count = parseInt(document.getElementById('timeInput').value);
 	updateLiveButton(step, count);
 }
 
@@ -1148,7 +1144,6 @@ function updateLiveButton(newStep, newCount){
     var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	viewerVars.selectorOptions.buttons[buttonIndex].step = newStep;
 	viewerVars.selectorOptions.buttons[buttonIndex].count = newCount;
-	viewerVars.inLiveMode = true;
 	var layoutChanges = {'xaxis' : { 'autorange' : true}};
 	layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
 	layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
@@ -1169,8 +1164,8 @@ function calculateLiveCount(){
 		case "hour":
 			liveButtonCount *= (60*60*1000);
 			break;
-		// To be added ...
-		default:	// day
+		// day
+		default:
 			liveButtonCount *= (24*60*60*1000);
 			break;
 	}
