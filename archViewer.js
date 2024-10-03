@@ -47,12 +47,10 @@ viewerVars.icons = {}
 // We take a snapshot of the gd before showing the comment modal. This is stored here
 viewerVars.currentSnapshot = null;
 
-//Test
 // last interval choice
 var lastInterval = null;
 // last time unit choice
 var lastUnit = null;
-//End test
 
 // This is one of the integration points with the server.
 // This should default to a path relative location that works from the appliance UI.
@@ -271,48 +269,33 @@ function processChangesOnXAxis(eventdata) {
 			fetchDataFromServerAndPlot("ReplaceTraces");
 			return;
 		}
-		// if (Math.abs(duration - previousDuration) < 10*1000) {
-		// 	console.log("Resolution stays the same; use extendTraces/prependTrace");
-		// 	if(viewerVars.start < previousStart) {
-		// 		// We panned left
-		// 		viewerVars.queryStart = viewerVars.start;
-		// 		viewerVars.queryEnd = previousStart;
-		// 		fetchDataFromServerAndPlot("LeftPan");
-		// 	} else {
-		// 		// We panned right
-		// 		viewerVars.queryStart = previousEnd;
-		// 		viewerVars.queryEnd = viewerVars.end;
-		// 		fetchDataFromServerAndPlot("RightPan");
-		// 	}
-		// } else {
-			console.log("Change in resolution; deleting and replacing traces");
-			determineBinSize();
-			viewerVars.queryStart = viewerVars.start;
-			viewerVars.queryEnd = viewerVars.end;
-			fetchDataFromServerAndPlot("ReplaceTraces");
-			var liveButtonCount = calculateLiveCount();
-			if(duration == liveButtonCount && viewerVars.liveModeTimer == null) {
-				console.log("Kicking off live mode..");
-				var layoutChanges = {'xaxis' : { 'autorange' : true}};
+		console.log("Change in resolution; deleting and replacing traces");
+		determineBinSize();
+		viewerVars.queryStart = viewerVars.start;
+		viewerVars.queryEnd = viewerVars.end;
+		fetchDataFromServerAndPlot("ReplaceTraces");
+		var liveButtonCount = calculateLiveCount();
+		if(duration == liveButtonCount && viewerVars.liveModeTimer == null) {
+			console.log("Kicking off live mode..");
+			var layoutChanges = {'xaxis' : { 'autorange' : true}};
+			layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
+			layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
+			layoutChanges.title = 'EPICS Archiver Appliance Viewer (live mode)';
+			Plotly.relayout(myDiv, layoutChanges);
+			viewerVars.liveModeTimer = setInterval(liveModeTick, 1*1000);
+		} else {
+			if(viewerVars.liveModeTimer != null) {
+				console.log("Entering static mode..");
+				clearInterval(viewerVars.liveModeTimer);
+				viewerVars.liveModeTimer = null;
+				var layoutChanges = {'xaxis' : { 'autorange' : false}};
 				layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
+				layoutChanges.xaxis.range = [viewerVars.start.getTime(), viewerVars.end.getTime()];
 				layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
-				layoutChanges.title = 'EPICS Archiver Appliance Viewer (live mode)';
+				layoutChanges.title = 'EPICS Archiver Appliance Viewer (static mode)';
 				Plotly.relayout(myDiv, layoutChanges);
-				viewerVars.liveModeTimer = setInterval(liveModeTick, 1*1000);
-			} else {
-				if(viewerVars.liveModeTimer != null) {
-					console.log("Entering static mode..");
-					clearInterval(viewerVars.liveModeTimer);
-					viewerVars.liveModeTimer = null;
-					var layoutChanges = {'xaxis' : { 'autorange' : false}};
-					layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
-					layoutChanges.xaxis.range = [viewerVars.start.getTime(), viewerVars.end.getTime()];
-					layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
-					layoutChanges.title = 'EPICS Archiver Appliance Viewer (static mode)';
-					Plotly.relayout(myDiv, layoutChanges);
-				}
 			}
-		// }
+		}
 	} else if ('xaxis.range[0]' in eventdata) {
 		console.log("We compressed the time scale on the left side");
 		viewerVars.start = moment(eventdata['xaxis.range[0]']).toDate();
@@ -538,12 +521,11 @@ function generatePlotConfig() {
 	var bPhone = (window.screen.availHeight > window.screen.availWidth) ? true : false;
 	var newModeBarButtons = [];
 
-	//Test Advanced view button
+	// Advanced view button for interval selection
 	newModeBarButtons.push({ name: 'Advanced view',
 		icon: viewerVars.icons['solid/timeline'],
 		click: showAdvancedViewModal
 	});
-	//End test
 
 	newModeBarButtons.push({ name: 'Start/End',
 		icon: viewerVars.icons['regular/calendar-alt'],
@@ -761,7 +743,6 @@ function liveModeTick() { // Timer function for the live mode tick...
 	viewerVars.start = new Date(now.getTime() - liveButtonCount);
 	viewerVars.queryStart = viewerVars.start;
 	viewerVars.queryEnd = viewerVars.end;
-	// fetchDataFromServerAndPlot("RightPan");
 	fetchDataFromServerAndPlot("ReplaceTraces");
 }
 
@@ -1096,7 +1077,7 @@ function removeSelectedPVs() {
     });
 }
 
-// Test advanced view
+// Advanced view modal
 function showAdvancedViewModal(){
 	var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	lastUnit = viewerVars.selectorOptions.buttons[buttonIndex].step;
@@ -1140,6 +1121,7 @@ function showAdvancedView(){
 	updateLiveButton(step, count);
 }
 
+// Update the properties (step, count) of Live button
 function updateLiveButton(newStep, newCount){
     var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	viewerVars.selectorOptions.buttons[buttonIndex].step = newStep;
@@ -1150,6 +1132,7 @@ function updateLiveButton(newStep, newCount){
 	Plotly.relayout(myDiv, layoutChanges);
 }
 
+// Calculate the interval in millisecond
 function calculateLiveCount(){
 	var liveButtonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	var liveButtonCount = viewerVars.selectorOptions.buttons[liveButtonIndex].count;
@@ -1171,7 +1154,6 @@ function calculateLiveCount(){
 	}
 	return liveButtonCount;
 }
-//End Test
 
 $(document).ready( function() {
     $.getJSON("lib/fapaths.json").done(function(icons){
