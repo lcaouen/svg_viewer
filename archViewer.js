@@ -68,28 +68,29 @@ $.get("../../../site_params.json")
     viewerVars.siteSupportsPostToElog = _.get(site_params, "siteSupportsPostToElog", false);
 })
 
-
-
 // Google finance like list of time windows..
 viewerVars.selectorOptions = {
-		buttons: [{step: 'second',  stepmode: 'backward', count: 30, label: '30s'   },
-		          {step: 'minute',  stepmode: 'backward', count: 1,  label: '1m'    },
-		          {step: 'minute',  stepmode: 'backward', count: 5,  label: '5m'    },
-		          {step: 'minute',  stepmode: 'backward', count: 15, label: '15m'   },
-		          {step: 'minute',  stepmode: 'backward', count: 30, label: '30m'   },
-		          {step: 'hour',    stepmode: 'backward', count: 1,  label: '1h'    },
-		          {step: 'hour',    stepmode: 'backward', count: 4,  label: '4h'    },
-		          {step: 'hour',    stepmode: 'backward', count: 8,  label: '8h'    },
-		          {step: 'day',     stepmode: 'backward', count: 1,  label: '1d'    },
-		          {step: 'day',     stepmode: 'backward', count: 2,  label: '2d'    },
-		          {step: 'day',     stepmode: 'backward', count: 7,  label: '1w'    },
-		          {step: 'day',     stepmode: 'backward', count: 14, label: '2w'    },
-		          {step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
-		          {step: 'month',   stepmode: 'backward', count: 6,  label: '6M'    },
-		          {step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
-		          {step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
-		          {step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
-		          ]
+	bgcolor: '#fdae61',
+	activecolor : '#f57a03',
+	buttons: [
+				{step: 'second',  stepmode: 'backward', count: 30, label: '30s'   },
+				{step: 'minute',  stepmode: 'backward', count: 1,  label: '1m'    },
+				{step: 'minute',  stepmode: 'backward', count: 5,  label: '5m'    },
+				{step: 'minute',  stepmode: 'backward', count: 15, label: '15m'   },
+				{step: 'minute',  stepmode: 'backward', count: 30, label: '30m'   },
+				{step: 'hour',    stepmode: 'backward', count: 1,  label: '1h'    },
+				{step: 'hour',    stepmode: 'backward', count: 4,  label: '4h'    },
+				{step: 'hour',    stepmode: 'backward', count: 8,  label: '8h'    },
+				{step: 'day',     stepmode: 'backward', count: 1,  label: '1d'    },
+				{step: 'day',     stepmode: 'backward', count: 2,  label: '2d'    },
+				{step: 'day',     stepmode: 'backward', count: 7,  label: '1w'    },
+				{step: 'day',     stepmode: 'backward', count: 14, label: '2w'    },
+				{step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
+				{step: 'month',   stepmode: 'backward', count: 6,  label: '6M'    },
+				{step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
+				{step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
+				{step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
+			]
 };
 
 if (window.screen.availHeight > window.screen.availWidth) {
@@ -274,6 +275,7 @@ function processChangesOnXAxis(eventdata) {
 		viewerVars.queryStart = viewerVars.start;
 		viewerVars.queryEnd = viewerVars.end;
 		fetchDataFromServerAndPlot("ReplaceTraces");
+
 		var liveButtonCount = calculateLiveCount();
 		if(duration == liveButtonCount && viewerVars.liveModeTimer == null) {
 			console.log("Kicking off live mode..");
@@ -1088,7 +1090,7 @@ function showAdvancedViewModal(){
 				<label for="timeInput"><b>Enter your desired interval:</b></label>
 			</div>
 			<div class="col-auto">
-				<input id="timeInput" name="timeInput" type="number" min="1" value="${lastInterval}" class="form-control" style="width: 100px;" required onblur="validateInput(this)" />
+				<input id="timeInput" name="timeInput" type="number" min="1" value="${lastInterval}" class="form-control" style="width: 110px;" required onblur="validateInput(this)" />
 			</div>
 			<script>
     			function validateInput(input) {
@@ -1101,11 +1103,11 @@ function showAdvancedViewModal(){
 				<label for="timeInput"><b>Select your desired time unit:</b></label>
 			</div>
 			<div class="col-auto">
-				<select class="form-control" id="unitInput" style="width: 100px;">
-					<option value="second" ${lastUnit === 'second' ? 'selected' : ''}>second</option>
-					<option value="minute" ${lastUnit === 'minute' ? 'selected' : ''}>minute</option>
-					<option value="hour" ${lastUnit === 'hour' ? 'selected' : ''}>hour</option>
-					<option value="day" ${lastUnit === 'day' ? 'selected' : ''}>day</option>
+				<select class="form-control" id="unitInput" style="width: 110px;">
+					<option value="second" ${lastUnit === 'second' ? 'selected' : ''}>second(s)</option>
+					<option value="minute" ${lastUnit === 'minute' ? 'selected' : ''}>minute(s)</option>
+					<option value="hour" ${lastUnit === 'hour' ? 'selected' : ''}>hour(s)</option>
+					<option value="day" ${lastUnit === 'day' ? 'selected' : ''}>day(s)</option>
 				</select>
 			</div>
 		</div>
