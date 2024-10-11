@@ -1080,7 +1080,7 @@ function removeSelectedPVs() {
 }
 
 // Advanced view modal
-function showAdvancedViewModal(){
+function showAdvancedViewModal() {
 	var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	lastUnit = viewerVars.selectorOptions.buttons[buttonIndex].step;
 	lastInterval = viewerVars.selectorOptions.buttons[buttonIndex].count;
@@ -1117,14 +1117,14 @@ function showAdvancedViewModal(){
 	$('#advancedViewModal').modal('show');
 }
 
-function showAdvancedView(){
+function showAdvancedView() {
 	var step = document.getElementById('unitInput').value;
 	var count = parseInt(document.getElementById('timeInput').value);
 	updateLiveButton(step, count);
 }
 
 // Update the properties (step, count) of Live button
-function updateLiveButton(newStep, newCount){
+function updateLiveButton(newStep, newCount) {
     var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	viewerVars.selectorOptions.buttons[buttonIndex].step = newStep;
 	viewerVars.selectorOptions.buttons[buttonIndex].count = newCount;
@@ -1135,7 +1135,7 @@ function updateLiveButton(newStep, newCount){
 }
 
 // Calculate the interval in millisecond
-function calculateLiveCount(){
+function calculateLiveCount() {
 	var liveButtonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	var liveButtonCount = viewerVars.selectorOptions.buttons[liveButtonIndex].count;
 	var liveButtonStep = viewerVars.selectorOptions.buttons[liveButtonIndex].step;
