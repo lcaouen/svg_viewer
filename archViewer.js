@@ -47,10 +47,14 @@ viewerVars.icons = {}
 // We take a snapshot of the gd before showing the comment modal. This is stored here
 viewerVars.currentSnapshot = null;
 
-// last interval choice
-var lastInterval = null;
-// last time unit choice
-var lastUnit = null;
+// last live interval selection
+var lastCount = null;
+// last live time unit selection
+var lastStep = null;
+// current static interval selection
+var curCount = 1;
+// current static time unit selection
+var curStep = "hour";
 
 // This is one of the integration points with the server.
 // This should default to a path relative location that works from the appliance UI.
@@ -89,21 +93,21 @@ viewerVars.selectorOptions = {
 				{step: 'month',   stepmode: 'backward', count: 6,  label: '6M'    },
 				{step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
 				{step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
-				{step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
+				{step: 'hour',	  stepmode: 'forward', 	count: 1,  label: 'Live'  },
 			]
 };
 
 if (window.screen.availHeight > window.screen.availWidth) {
 	viewerVars.selectorOptions = {
 		buttons: [
-			  {step: 'minute',  stepmode: 'forward',  count: 7,  label: 'Live'  },
-			  {step: 'minute',  stepmode: 'backward', count: 1,  label: '1m'    },
-			  {step: 'hour',    stepmode: 'backward', count: 1,  label: '1h'    },
-			  {step: 'day',     stepmode: 'backward', count: 1,  label: '1d'    },
-			  {step: 'day',     stepmode: 'backward', count: 7,  label: '1w'    },
-			  {step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
-			  {step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
-			  {step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
+				{step: 'hour',    stepmode: 'forward',  count: 1,  label: 'Live'  },
+				{step: 'minute',  stepmode: 'backward', count: 1,  label: '1m'    },
+				{step: 'hour',    stepmode: 'backward', count: 1,  label: '1h'    },
+				{step: 'day',     stepmode: 'backward', count: 1,  label: '1d'    },
+				{step: 'day',     stepmode: 'backward', count: 7,  label: '1w'    },
+				{step: 'month',   stepmode: 'backward', count: 1,  label: '1M'    },
+				{step: 'year',    stepmode: 'backward', count: 1,  label: '1Y'    },
+				{step: 'year',    stepmode: 'todate',   count: 1,  label: 'YTD'   },
 			  ]
 	};
 }
@@ -220,7 +224,7 @@ function getEstimatedRawSamples() {
 
 // Enum for the various type of X axis changes; to provide a "smooth" panning experience, we treat that specially.
 // All other options are usually delete/replace traces.
-var XAxis_Change_Type = {"NewPlot":1, "ReplaceTraces":2, "LeftPan":3, "RightPan":4, "AddNewTrace" : 5};
+var XAxis_Change_Type = {"NewPlot":1, "ReplaceTraces":2, "LeftPan":3, "RightPan":4, "AddNewTrace":5};
 // Object.freeze(XAxis_Change_Type)
 
 // Compute the bin size for the operators automatically based on the number of points in the plot window and (endTime - startTime).
@@ -457,6 +461,22 @@ function fetchDataFromServerAndPlot(xAxisChangeType, newTracePVNames) {
 				myDiv.on('plotly_relayout', processChangesOnXAxis);
 				addToolTipsToTraceLegends();
 			});
+
+			// Capture the last-clicked button
+			$('.rangeselector').on('click', 'g', function(event) {
+				var buttonLabel = $(event.target).closest('g').find('text').text();
+				if(buttonLabel !== "Live") {
+					var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === buttonLabel);
+					if(buttonIndex !== -1){
+						curStep = viewerVars.selectorOptions.buttons[buttonIndex].step;
+						curCount = viewerVars.selectorOptions.buttons[buttonIndex].count;
+						updateLiveButton(curStep, curCount);
+					}
+					else {
+						console.log("Button label not found !");
+					}
+				}
+            });	
 		} else { // We have already created the plotly object; use add/delete API's
 			var updateXs = [], updateYs = [], updateIndices = [], newTraces = [], newTraceIndices = [];
 			for(i = 0; i < viewerVars.pvs.length; i++) {
@@ -1082,15 +1102,15 @@ function removeSelectedPVs() {
 // Advanced view modal
 function showAdvancedViewModal() {
 	var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
-	lastUnit = viewerVars.selectorOptions.buttons[buttonIndex].step;
-	lastInterval = viewerVars.selectorOptions.buttons[buttonIndex].count;
+	lastStep = viewerVars.selectorOptions.buttons[buttonIndex].step;
+	lastCount = viewerVars.selectorOptions.buttons[buttonIndex].count;
 	var modal = `
 		<div class="row align-items-center">
 			<div class="col-auto">
 				<label for="timeInput"><b>Enter your desired interval:</b></label>
 			</div>
 			<div class="col-auto">
-				<input id="timeInput" name="timeInput" type="number" min="1" value="${lastInterval}" class="form-control" style="width: 110px;" required onblur="validateInput(this)" />
+				<input id="timeInput" name="timeInput" type="number" min="1" value="${lastCount}" class="form-control" style="width: 110px;" required onblur="validateInput(this)" />
 			</div>
 			<script>
     			function validateInput(input) {
@@ -1104,10 +1124,12 @@ function showAdvancedViewModal() {
 			</div>
 			<div class="col-auto">
 				<select class="form-control" id="unitInput" style="width: 110px;">
-					<option value="second" ${lastUnit === 'second' ? 'selected' : ''}>second(s)</option>
-					<option value="minute" ${lastUnit === 'minute' ? 'selected' : ''}>minute(s)</option>
-					<option value="hour" ${lastUnit === 'hour' ? 'selected' : ''}>hour(s)</option>
-					<option value="day" ${lastUnit === 'day' ? 'selected' : ''}>day(s)</option>
+					<option value="second" ${lastStep === 'second' ? 'selected' : ''}>second(s)</option>
+					<option value="minute" ${lastStep === 'minute' ? 'selected' : ''}>minute(s)</option>
+					<option value="hour" ${lastStep === 'hour' ? 'selected' : ''}>hour(s)</option>
+					<option value="day" ${lastStep === 'day' ? 'selected' : ''}>day(s)</option>
+					<option value="month" ${lastStep === 'month' ? 'selected' : ''}>month(s)</option>
+					<option value="year" ${lastStep === 'year' ? 'selected' : ''}>year(s)</option>
 				</select>
 			</div>
 		</div>
@@ -1123,15 +1145,17 @@ function showAdvancedView() {
 	updateLiveButton(step, count);
 }
 
-// Update the properties (step, count) of Live button
+// Update the properties (step, count) of Live button (charged from either static button or interval option box)
 function updateLiveButton(newStep, newCount) {
     var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === "Live");
 	viewerVars.selectorOptions.buttons[buttonIndex].step = newStep;
 	viewerVars.selectorOptions.buttons[buttonIndex].count = newCount;
-	var layoutChanges = {'xaxis' : { 'autorange' : true}};
-	layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
-	layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
-	Plotly.relayout(myDiv, layoutChanges);
+	if(newCount !== curCount || newStep !== curStep){
+		var layoutChanges = {'xaxis' : { 'autorange' : true}};
+		layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
+		layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
+		Plotly.relayout(myDiv, layoutChanges);
+	}
 }
 
 // Calculate the interval in millisecond
@@ -1149,9 +1173,15 @@ function calculateLiveCount() {
 		case "hour":
 			liveButtonCount *= (60*60*1000);
 			break;
-		// day
-		default:
+		case "day":
 			liveButtonCount *= (24*60*60*1000);
+			break;
+		case "month":
+			liveButtonCount *= (30*24*60*60*1000);	// 30 days
+			break;
+		// year
+		default:
+			liveButtonCount *= (365*24*60*60*1000);	// 365 days
 			break;
 	}
 	return liveButtonCount;
