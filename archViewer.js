@@ -47,13 +47,15 @@ viewerVars.icons = {}
 // We take a snapshot of the gd before showing the comment modal. This is stored here
 viewerVars.currentSnapshot = null;
 
-// last live interval selection
+// Live mode flag
+viewerVars.inLiveMode = false;
+// Last live interval selection
 var lastCount = null;
-// last live time unit selection
+// Last live time unit selection
 var lastStep = null;
-// current static interval selection
+// Current static interval selection
 var curCount = 1;
-// current static time unit selection
+// Current static time unit selection
 var curStep = "hour";
 
 // This is one of the integration points with the server.
@@ -283,6 +285,7 @@ function processChangesOnXAxis(eventdata) {
 		var liveButtonCount = calculateLiveCount();
 		if(duration == liveButtonCount && viewerVars.liveModeTimer == null) {
 			console.log("Kicking off live mode..");
+			viewerVars.inLiveMode = true;
 			var layoutChanges = {'xaxis' : { 'autorange' : true}};
 			layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
 			layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
@@ -292,6 +295,7 @@ function processChangesOnXAxis(eventdata) {
 		} else {
 			if(viewerVars.liveModeTimer != null) {
 				console.log("Entering static mode..");
+				viewerVars.inLiveMode = false;
 				clearInterval(viewerVars.liveModeTimer);
 				viewerVars.liveModeTimer = null;
 				var layoutChanges = {'xaxis' : { 'autorange' : false}};
@@ -468,12 +472,10 @@ function fetchDataFromServerAndPlot(xAxisChangeType, newTracePVNames) {
 				if(buttonLabel !== "Live") {
 					var buttonIndex = viewerVars.selectorOptions.buttons.findIndex(button => button.label === buttonLabel);
 					if(buttonIndex !== -1){
+						viewerVars.inLiveMode = false;
 						curStep = viewerVars.selectorOptions.buttons[buttonIndex].step;
 						curCount = viewerVars.selectorOptions.buttons[buttonIndex].count;
 						updateLiveButton(curStep, curCount);
-					}
-					else {
-						console.log("Button label not found !");
 					}
 				}
             });	
@@ -1151,6 +1153,9 @@ function updateLiveButton(newStep, newCount) {
 	viewerVars.selectorOptions.buttons[buttonIndex].step = newStep;
 	viewerVars.selectorOptions.buttons[buttonIndex].count = newCount;
 	if(newCount !== curCount || newStep !== curStep){
+		if(!viewerVars.inLiveMode) {
+			alert("Please click Live button to apply changes !");
+		}
 		var layoutChanges = {'xaxis' : { 'autorange' : true}};
 		layoutChanges.xaxis.rangeselector = viewerVars.selectorOptions;
 		layoutChanges.xaxis.domain = myDiv.layout.xaxis.domain;
